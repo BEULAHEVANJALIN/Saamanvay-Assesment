@@ -1,0 +1,72 @@
+CREATE OR REPLACE FUNCTION attendance_count()
+	RETURNS TABLE
+		(
+			_name VARCHAR,
+			_count BIGINT
+		) AS $$
+	BEGIN
+		RETURN QUERY
+
+			WITH sq1 AS 
+				(
+					SELECT NAME, COUNT(*) AS count FROM 
+					(
+						SELECT name, employee_id, recorded_date 
+							FROM public.employee
+								LEFT JOIN public.attendance_register
+									ON employee.id = attendance_register.employee_id
+					) 
+					AS ssq1
+					GROUP BY name
+				)
+			SELECT * FROM sq1 AS regular_employees;
+	END;
+$$
+language plpgsql;
+
+
+CREATE OR REPLACE FUNCTION regular_irregular()
+RETURNS text AS
+$$
+	DECLARE c1 text;
+	DECLARE c2 text;
+	DECLARE irreg_emp text;
+	DECLARE reg_emp text;
+	BEGIN
+		irreg_emp := 'Irregular employees: ';
+		reg_emp := 'Regular employees: ';
+		
+		FOR c1 in 
+		(
+			SELECT _name FROM attendance_count() WHERE _count = (SELECT MIN(_count) FROM attendance_count())
+		)
+		LOOP 
+			BEGIN 
+				IF irreg_emp = 'Irregular employees: ' THEN 
+					irreg_emp:= irreg_emp || c1; 
+				ELSE
+					irreg_emp :=  irreg_emp || ',' || c1; 
+				END IF;
+			END; 
+		END LOOP;
+		
+		FOR c2 in
+		(
+			SELECT _name FROM attendance_count() WHERE _count = (SELECT MAX(_count) FROM attendance_count())
+		)
+		LOOP
+			BEGIN 
+				IF reg_emp = 'Regular employees: ' THEN 
+					reg_emp:= reg_emp || c2; 
+				ELSE
+					reg_emp :=  reg_emp || ',' || c2; 
+				END IF;
+			END; 
+		END LOOP;
+		RETURN irreg_emp || CHR(10) || reg_emp;
+	END
+$$
+language plpgsql;
+
+
+SELECT regular_irregular();

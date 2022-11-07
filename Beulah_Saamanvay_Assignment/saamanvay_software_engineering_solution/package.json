@@ -1,0 +1,12 @@
+{
+  "name": "samanvay",
+  "version": "1.0.0",
+  "description": "Software Engineer / QA - Coding Problem",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Beulah Evanjalin",
+  "license": "ISC"
+}
